@@ -49,19 +49,28 @@ def get_nbr_df(metadata_selected, nbr_count, nbr_type, metric):
     type_array = metadata.node_type.values
     name_type_array = metadata.node_name_type.values
     metadata_selected_index = metadata_selected.index.values[0]
+    beige = get_beige()
+    distance_list = []
     if metric == "Manhattan":
-        distance_arr = np.load(MANHATTEN_DISTANCE_PATH, mmap_mode="r")         
+        from scipy.spatial.distance import minkowski
+        for i in range(beige.shape[0]):
+            distance_list.append(minkowski(beige[metadata_selected_index], beige[i], p=1))
     elif metric == "Cosine":
-        distance_arr = np.load(COSINE_DISTANCE_PATH, mmap_mode="r")    
-    nbr_df = pd.DataFrame(list(zip(nbr_array, type_array, name_type_array, distance_arr[metadata_selected_index])), columns=["Concept name", "Concept type", "name_type", "Distance"])
+        from scipy.spatial.distance import cosine
+        for i in range(beige.shape[0]):
+            distance_list.append(cosine(beige[metadata_selected_index], beige[i]))
+    distance_arr = np.array(distance_list)
+    nbr_df = pd.DataFrame(list(zip(nbr_array, type_array, name_type_array, distance_arr)), columns=["Concept name", "Concept type", "name_type", "Distance"])
     if nbr_type == DEFAULT_NBR_NODETYPE_SELECTION:
         nbr_df_ = nbr_df.sort_values(by=["Distance", "Concept name"])        
-        return nbr_df_[(nbr_df_["Concept name"]!=metadata_selected["node_name"].values[0]) | (nbr_df_["Concept type"]!=metadata_selected["node_type"].values[0])].head(nbr_count).reset_index().drop("index", axis=1)
+        nbr_df_ = nbr_df_[(nbr_df_["Concept name"]!=metadata_selected["node_name"].values[0]) | (nbr_df_["Concept type"]!=metadata_selected["node_type"].values[0])].reset_index().drop("index", axis=1)
+        return nbr_df_.drop_duplicates(subset=["Concept name", "Concept type", "Distance"]).head(nbr_count)
     else:
         nbr_df_selected = nbr_df[nbr_df["Concept type"]==nbr_type]
         nbr_df_selected_ = nbr_df_selected.sort_values(by=["Distance", "Concept name"])
-        return nbr_df_selected_[(nbr_df_selected_["Concept name"]!=metadata_selected["node_name"].values[0]) | (nbr_df_selected_["Concept type"]!=metadata_selected["node_type"].values[0])].head(nbr_count).reset_index().drop("index", axis=1)
-    
+        nbr_df_ = nbr_df_selected_[(nbr_df_selected_["Concept name"]!=metadata_selected["node_name"].values[0]) | (nbr_df_selected_["Concept type"]!=metadata_selected["node_type"].values[0])].head(nbr_count).reset_index().drop("index", axis=1)
+        return nbr_df_.drop_duplicates(subset=["Concept name", "Concept type", "Distance"]).head(nbr_count)
+            
 def get_top_features(metadata_selected, feature_metadata, feature_type, feature_count):
     metadata_selected_index = metadata_selected.index.values[0]
     top_feature_index_arr = np.load(TOP_FEATURE_INDEX_PATH, mmap_mode="r")
