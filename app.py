@@ -214,7 +214,7 @@ if node_selected != DEFAULT_SELECTION:
         feature_count = st.sidebar.slider("Feature count", MIN_FEATURE_COUNT, MAX_FEATURE_COUNT, DEFAULT_FEATURE_COUNT)
         feature_type = st.sidebar.selectbox("Select the feature node type", list(feature_metadata.sort_values(by="node_type").node_type.unique()), index=4)        
         st.write("""
-        ### Top {} {} features of BEIGE 
+        ### Top {} {} features of the selected BEIGE 
         """.format(feature_count, feature_type)
                 )
         st.write(get_top_features(metadata_selected, feature_metadata, feature_type, feature_count))
