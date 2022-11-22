@@ -25,7 +25,7 @@ DEFAULT_FEATURE_COUNT = 10
 
 ROW_METADATA_PATH = os.path.join("data", "beige_combined", "combined_beige_row_map_med_relevant_2_with_tsne_values.tsv")
 COLUMN_METADATA_PATH = os.path.join("data", "beige_combined", "combined_beige_column_map.tsv")
-BEIGE_PATH = os.path.join("data", "beige_combined", "combined_beige_light_weight_med_relevant_2.npy")
+BEIGE_PATH = os.path.join("data", "beige_combined", "combined_beige_light_weight_med_relevant_2_float_32.npy")
 
 def get_metadata():
     return pd.read_csv(ROW_METADATA_PATH, sep="\t")
