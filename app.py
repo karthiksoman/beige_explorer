@@ -201,7 +201,8 @@ else:
 
 
 st.markdown("<h1 style='text-align: center; color: black;'>Biomedical Evidence Integrated Graph Embedding (BEIGE)</h1>", unsafe_allow_html=True)
-st.markdown("<h4 style='text-align: center; color: black;'>Total medical concepts = 7471, Original dimension of BEIGE = 37412</h4>", unsafe_allow_html=True)
+st.markdown("<h5 style='text-align: center; color: black;'>Total medical concepts = 7471</h5>", unsafe_allow_html=True)
+st.markdown("<h5 style='text-align: center; color: black;'>Original dimension of BEIGE = 37,412</h5>", unsafe_allow_html=True)
 st.plotly_chart(fig_final)
 if node_selected != DEFAULT_SELECTION:
     st.write("""
