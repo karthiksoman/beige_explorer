@@ -9,7 +9,7 @@ Application has the following features:
 (for e.g. what are the top 20 concepts near the biomedical concept "Vertigo" in BEIGE vector space)
 - Interactive feature to find the nearest neighbors based on their type
 (for e.g. what are the top 20 "Diseases" near the biomedical concept "Vertigo" in BEIGE vector space)
-- Interactive feature to find the top features of a biomedical concepts
+- Interactive feature to find the top features of a biomedical concept
 (for e.g. what are the top 10 genes associated with Parkinson's disease)
 
 This [web application](https://beige-explorer.herokuapp.com/), hence, will be helpful for the user to get an intuitive understanding of the BEIGE embedding vectors for biomedical concepts.
