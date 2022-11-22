@@ -22,19 +22,17 @@ MIN_FEATURE_COUNT = 5
 MAX_FEATURE_COUNT = 50
 DEFAULT_FEATURE_COUNT = 10
 
-
 ROW_METADATA_PATH = os.path.join("data", "combined_beige_row_map_med_relevant_2_with_tsne_values.tsv")
 COLUMN_METADATA_PATH = os.path.join("data", "combined_beige_column_map.tsv")
-BEIGE_PATH = os.path.join("data", "combined_beige_light_weight_med_relevant_2_float_32.npy")
+COSINE_DISTANCE_PATH = os.path.join("data", "cosine_distance_of_seps_combined_beige.npy")
+MANHATTEN_DISTANCE_PATH = os.path.join("data", "manhatten_distance_of_seps_combined_beige.npy")
+TOP_FEATURE_INDEX_PATH = os.path.join("data", "top_features_indices.npy")
 
 def get_metadata():
     return pd.read_csv(ROW_METADATA_PATH, sep="\t")
 
 def get_feature_metadata():
     return pd.read_csv(COLUMN_METADATA_PATH, sep="\t")
-
-def get_beige():
-    return np.load(BEIGE_PATH, mmap_mode="r")
 
 def get_dim():
     dim_list = ["2D", "3D"]
@@ -51,41 +49,33 @@ def get_nbr_df(metadata_selected, nbr_count, nbr_type, metric):
     type_array = metadata.node_type.values
     name_type_array = metadata.node_name_type.values
     metadata_selected_index = metadata_selected.index.values[0]
-    beige = get_beige()
-    distance_list = []
     if metric == "Manhattan":
-        from scipy.spatial.distance import minkowski
-        for i in range(beige.shape[0]):
-            distance_list.append(minkowski(beige[metadata_selected_index], beige[i], p=1))
+        distance_arr = np.load(MANHATTEN_DISTANCE_PATH, mmap_mode="r")         
     elif metric == "Cosine":
-        from scipy.spatial.distance import cosine
-        for i in range(beige.shape[0]):
-            distance_list.append(cosine(beige[metadata_selected_index], beige[i]))
-    distance_arr = np.array(distance_list)
-    nbr_df = pd.DataFrame(list(zip(nbr_array, type_array, name_type_array, distance_arr)), columns=["Concept name", "Concept type", "name_type", "Distance"])
+        distance_arr = np.load(COSINE_DISTANCE_PATH, mmap_mode="r")    
+    nbr_df = pd.DataFrame(list(zip(nbr_array, type_array, name_type_array, distance_arr[metadata_selected_index])), columns=["Concept name", "Concept type", "name_type", "Distance"])
     if nbr_type == DEFAULT_NBR_NODETYPE_SELECTION:
         nbr_df_ = nbr_df.sort_values(by=["Distance", "Concept name"])        
-        nbr_df_ = nbr_df_[(nbr_df_["Concept name"]!=metadata_selected["node_name"].values[0]) | (nbr_df_["Concept type"]!=metadata_selected["node_type"].values[0])].reset_index().drop("index", axis=1)
-        return nbr_df_.drop_duplicates(subset=["Concept name", "Concept type", "Distance"]).head(nbr_count)
+        return nbr_df_[(nbr_df_["Concept name"]!=metadata_selected["node_name"].values[0]) | (nbr_df_["Concept type"]!=metadata_selected["node_type"].values[0])].head(nbr_count).reset_index().drop("index", axis=1)
     else:
         nbr_df_selected = nbr_df[nbr_df["Concept type"]==nbr_type]
         nbr_df_selected_ = nbr_df_selected.sort_values(by=["Distance", "Concept name"])
-        nbr_df_ = nbr_df_selected_[(nbr_df_selected_["Concept name"]!=metadata_selected["node_name"].values[0]) | (nbr_df_selected_["Concept type"]!=metadata_selected["node_type"].values[0])].head(nbr_count).reset_index().drop("index", axis=1)
-        return nbr_df_.drop_duplicates(subset=["Concept name", "Concept type", "Distance"]).head(nbr_count)
-        
+        return nbr_df_selected_[(nbr_df_selected_["Concept name"]!=metadata_selected["node_name"].values[0]) | (nbr_df_selected_["Concept type"]!=metadata_selected["node_type"].values[0])].head(nbr_count).reset_index().drop("index", axis=1)
+    
 def get_top_features(metadata_selected, feature_metadata, feature_type, feature_count):
     metadata_selected_index = metadata_selected.index.values[0]
-    beige = get_beige()    
-    feature_metadata["beige"] = beige[metadata_selected_index]    
-    feature_metadata_ = feature_metadata[feature_metadata.node_type==feature_type].sort_values(by="beige", ascending=False).reset_index().drop(["beige", "index"], axis=1)
-    feature_metadata_.rename(columns={"node_name":"Feature name", "node_type":"Feature type"}, inplace=True)
-    feature_metadata_ = feature_metadata_.drop_duplicates(subset=["Feature name", "Feature type"])
-    return feature_metadata_[["Feature name", "Feature type"]].head(feature_count)
+    top_feature_index_arr = np.load(TOP_FEATURE_INDEX_PATH, mmap_mode="r")
+    feature_metadata_sub = feature_metadata.iloc[top_feature_index_arr[metadata_selected_index]]
+    feature_metadata_sub_ = feature_metadata_sub[feature_metadata_sub.node_type==feature_type]
+    feature_metadata_sub_.rename(columns={"node_name":"Feature name", "node_type":"Feature type"}, inplace=True)
+    feature_metadata_sub_ = feature_metadata_sub_.drop_duplicates(subset=["Feature name", "Feature type"])
+    return feature_metadata_sub_[["Feature name", "Feature type"]].head(feature_count).reset_index().drop("index", axis=1)
+        
+
             
 
             
-            
-            
+                        
 st.sidebar.header("""
  BEIGE Explorer
 """)
@@ -147,8 +137,8 @@ if node_selected != DEFAULT_SELECTION:
                                   hover_data=["node_type"]
                                  )
         fig_final = go.Figure(data=fig.data + fig_node_sel.data)     
-        
-    feature_explore_status = st.sidebar.checkbox("Explore BEIGE features")    
+    feature_explore_status = st.sidebar.checkbox("Explore BEIGE features") 
+
 else:
     fig_final = go.Figure(data=fig.data)
         
@@ -209,8 +199,8 @@ else:
 
 
 st.markdown("<h1 style='text-align: center; color: black;'>Biomedical Evidence Integrated Graph Embedding (BEIGE)</h1>", unsafe_allow_html=True)
-beige = get_beige()
-st.markdown("<h4 style='text-align: center; color: black;'>Total BEIGE = {}, Original dimension = {}</h4>".format(beige.shape[0], beige.shape[-1]), unsafe_allow_html=True)
+st.markdown("<h4 style='text-align: center; color: black;'>Total BEIGE = 7471, Original dimension = 37412</h4>", unsafe_allow_html=True)
+st.plotly_chart(fig_final)
 st.plotly_chart(fig_final)
 if node_selected != DEFAULT_SELECTION:
     st.write("""
@@ -222,10 +212,11 @@ if node_selected != DEFAULT_SELECTION:
         feature_count = st.sidebar.slider("Feature count", MIN_FEATURE_COUNT, MAX_FEATURE_COUNT, DEFAULT_FEATURE_COUNT)
         feature_type = st.sidebar.selectbox("Select the feature node type", list(feature_metadata.sort_values(by="node_type").node_type.unique()), index=4)        
         st.write("""
-        ### Top {} BEIGE {} features 
+        ### Top {} {} features of BEIGE 
         """.format(feature_count, feature_type)
                 )
         st.write(get_top_features(metadata_selected, feature_metadata, feature_type, feature_count))
+
     
     
     
