@@ -12,6 +12,6 @@ Application has the following features:
 - Interactive feature to find the top features of a biomedical concept
 (for e.g. what are the top 10 genes associated with Parkinson's disease)
 
-This [web application](https://beige-explorer.herokuapp.com/), hence, will be helpful for the user to get an intuitive understanding of the BEIGE embedding vectors for biomedical concepts.
+This [web application](https://beige-explorer.herokuapp.com/), hence, will be helpful for the user to get an intuitive understanding of the BEIGE embedding vectors of biomedical concepts.
 
   
